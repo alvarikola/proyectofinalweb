@@ -1,14 +1,30 @@
-import React from 'react';
+import React from "react";
+import Libros from "./Libros";
 
-function App() {
+
+
+function MyButton() {
     return (
-        <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-            <div className="max-w-md w-full bg-white shadow-md rounded-lg p-8">
-                <h1 className="text-3xl font-bold text-center text-gray-800 mb-6">¡Hola, React!</h1>
-                <p className="text-gray-600 text-center">Esta es una aplicación de React renderizada dentro de un proyecto Laravel.</p>
+        <div class="relative inline-flex  group">
+            <div
+                class="absolute transitiona-all duration-1000 opacity-70 -inset-px bg-gradient-to-r from-[#44BCFF] via-[#FF44EC] to-[#FF675E] rounded-xl blur-lg group-hover:opacity-100 group-hover:-inset-1 group-hover:duration-200 animate-tilt">
             </div>
+            <a href="#" title="Get quote now"
+                class="relative inline-flex items-center justify-center px-8 py-4 text-lg font-bold text-white transition-all duration-200 bg-gray-900 font-pj rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900"
+                role="button">Get it now
+            </a>
+        </div>
+        
+    );
+  }
+
+export default function App() {
+    return (
+        <div className="text-center p-8">
+            <h1 className="text-3xl font-bold mb-4">Laravel + React funcionando 🚀</h1>
+            <h2 className="text-xl mb-6">esta es la pagina principal</h2>
+            <MyButton />
+            <Libros />
         </div>
     );
 }
-
-export default App;
