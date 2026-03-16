@@ -1,5 +1,7 @@
 import React from "react";
-import Libros from "./Libros";
+import Libros from "./componentes/Libros";
+import MyNavBar from "./componentes/MyNavBar";
+
 
 
 
@@ -16,15 +18,18 @@ function MyButton() {
         </div>
         
     );
-  }
+}
 
 export default function App() {
     return (
-        <div className="text-center p-8">
-            <h1 className="text-3xl font-bold mb-4">Laravel + React funcionando 🚀</h1>
-            <h2 className="text-xl mb-6">esta es la pagina principal</h2>
-            <MyButton />
-            <Libros />
+        <div>
+            <MyNavBar />
+            <div className="text-center pt-32 pb-16">
+                <h1 className="text-3xl font-bold mb-4">Laravel + React funcionando 🚀</h1>
+                <h2 className="text-xl mb-6">esta es la pagina principal</h2>
+                <MyButton />
+                <Libros />
+            </div>
         </div>
     );
 }
