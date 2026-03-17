@@ -4,10 +4,10 @@ export default function Libros() {
 
   const [libros, setLibros] = useState([]);
 
-  useEffect(() => {
-    fetch("/api/libros")
-      .then(res => res.json())
-      .then(data => setLibros(data.data || [])); // <-- acceder a la propiedad data
+  useEffect(async () => {
+    const res = await fetch("/api/libros")
+    const json = await res.json()
+    setLibros(json.data || [])
   }, []);
 
   return (
