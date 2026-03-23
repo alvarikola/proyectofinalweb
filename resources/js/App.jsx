@@ -4,7 +4,7 @@ import Home from "./paginas/Home";
 import Login from "./paginas/Login";
 
 
-export  function App() {
+export default function App() {
     return (
         <BrowserRouter>
             <Routes>
