@@ -25,13 +25,13 @@ export default function Home() {
         <div className="bg-[#F5F5DC] min-h-screen text-[#3A3A3A]">
             <MyNavBar />
             <div className="text-center pt-32 pb-16">
-                <h1 className="text-3xl font-bold mb-4">
+                {/* <h1 className="text-3xl font-bold mb-4">
                     Laravel + React funcionando 🚀
                 </h1>
                 <h2 className="text-xl mb-6">
                     esta es la pagina principal
                 </h2>
-                <MyButton />
+                <MyButton /> */}
                 <Libros />
             </div>
         </div>

@@ -3,82 +3,69 @@ import React, { useState } from "react";
 export default function Home() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false); // Estado para mostrar/ocultar
+  const [showPassword, setShowPassword] = useState(false);
 
   return (
-    <div className="bg-gray-50 dark:bg-gray-800">
+    <div className="bg-[#F5F5DC] min-h-screen">
       <div className="flex min-h-[80vh] flex-col justify-center py-12 sm:px-6 lg:px-8">
+        
+        {/* TÍTULO */}
         <div className="text-center sm:mx-auto sm:w-full sm:max-w-md">
-          <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white">
-            Sign in
+          <h1 className="text-3xl font-extrabold text-[#3A3A3A]">
+            Iniciar sesión
           </h1>
         </div>
 
+        {/* CARD */}
         <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-          <div className="bg-white dark:bg-gray-700 px-4 pb-4 pt-8 sm:rounded-lg sm:px-10 sm:pb-6 sm:shadow">
+          <div className="bg-[#FAF9F6] px-6 pb-6 pt-8 sm:rounded-xl sm:shadow-md border border-[#E5E5E5]">
+
             <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
-              {/* Email input */}
+              
+              {/* EMAIL */}
               <div>
-                <label
-                  htmlFor="email"
-                  className="block text-sm font-medium text-gray-700 dark:text-white"
-                >
-                  Email address / Username
+                <label className="block text-sm font-medium text-[#3A3A3A]">
+                  Email
                 </label>
                 <div className="mt-1">
                   <input
-                    id="email"
                     type="text"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    className="block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white dark:placeholder-gray-300 dark:focus:border-indigo-400 dark:focus:ring-indigo-400 sm:text-sm"
+                    className="block w-full rounded-md border border-[#A8A29E] bg-[#FAF9F6] px-3 py-2 text-[#3A3A3A] placeholder-[#A8A29E] focus:outline-none focus:ring-2 focus:ring-[#C97B63]"
                   />
                 </div>
               </div>
 
-              {/* Password input con ojo */}
+              {/* PASSWORD */}
               <div className="relative">
-                <label
-                  htmlFor="password"
-                  className="block text-sm font-medium text-gray-700 dark:text-white"
-                >
-                  Password
+                <label className="block text-sm font-medium text-[#3A3A3A]">
+                  Contraseña
                 </label>
+
                 <div className="mt-1 relative">
                   <input
-                    id="password"
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    className="block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white dark:placeholder-gray-300 dark:focus:border-indigo-400 dark:focus:ring-indigo-400 sm:text-sm pr-10"
+                    className="block w-full rounded-md border border-[#A8A29E] bg-[#FAF9F6] px-3 py-2 pr-10 text-[#3A3A3A] focus:outline-none focus:ring-2 focus:ring-[#C97B63]"
                   />
-                  {/* Botón para mostrar/ocultar */}
+
+                  {/* ICONO OJO */}
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-[#6B705C] hover:text-[#3A3A3A]"
                   >
                     {showPassword ? (
-                      // Ojo abierto
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-5 w-5"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                      >
+                      <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                         <path d="M10 3C5 3 1.73 7.11 1 10c.73 2.89 4 7 9 7s8.27-4.11 9-7c-.73-2.89-4-7-9-7zM10 15a5 5 0 110-10 5 5 0 010 10z" />
                         <path d="M10 7a3 3 0 100 6 3 3 0 000-6z" />
                       </svg>
                     ) : (
-                      // Ojo cerrado
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-5 w-5"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                      >
+                      <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                         <path d="M2.293 2.293a1 1 0 011.414 0L17.707 16.293a1 1 0 01-1.414 1.414L2.293 3.707a1 1 0 010-1.414zM10 3C5 3 1.73 7.11 1 10c.33 1.31 1.35 3.06 2.93 4.47l1.43-1.43A5 5 0 0110 5c1.07 0 2.05.42 2.78 1.11l1.43-1.43C13.06 3.33 11.31 2.33 10 3zM10 15a5 5 0 01-5-5c0-1.07.42-2.05 1.11-2.78l1.43 1.43A3 3 0 0010 13a3 3 0 002.78-2.11l1.43 1.43A4.97 4.97 0 0110 15z" />
                       </svg>
                     )}
@@ -86,28 +73,30 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Botón Sign In */}
+              {/* BOTÓN */}
               <div>
                 <button
                   type="submit"
-                  className="group relative flex w-full justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:bg-indigo-700 dark:border-transparent dark:hover:bg-indigo-600 dark:focus:ring-indigo-400 dark:focus:ring-offset-2 disabled:cursor-wait disabled:opacity-50"
+                  className="w-full rounded-md bg-[#C97B63] px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-[#b96d56] focus:outline-none focus:ring-2 focus:ring-[#C97B63]"
                 >
-                  Sign In
+                  Entrar
                 </button>
               </div>
             </form>
 
-            <div className="m-auto mt-6 w-fit md:mt-8">
-              <span className="m-auto dark:text-gray-400">
-                Don't have an account?
-                <a
-                  className="font-semibold text-indigo-600 dark:text-indigo-100"
-                  href="/register"
-                >
-                  Create Account
-                </a>
-              </span>
+            {/* REGISTER */}
+            <div className="mt-6 text-center">
+              <span className="text-[#A8A29E]">
+                ¿No tienes cuenta?
+              </span>{" "}
+              <a
+                href="/register"
+                className="font-semibold text-[#6B705C] hover:underline"
+              >
+                Crear cuenta
+              </a>
             </div>
+
           </div>
         </div>
       </div>
