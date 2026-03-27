@@ -20,7 +20,8 @@ class Libro extends Model
         'genero',
         'cover_url',
         'valoracion',
-        'calificaciones'
+        'calificaciones',
+        'isbn'
     ];
 
     protected $casts = [

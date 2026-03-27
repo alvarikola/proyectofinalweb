@@ -10,9 +10,10 @@ class LibroController extends Controller
 {
     public function index(Request $request)
     {
-        $perPage = $request->get('per_page', 10); // libros por página
+        $perPage = $request->get('per_page', 12); // libros por página
 
-        $libros = Libro::paginate($perPage);
+        $libros = Libro::orderByRaw('valoracion IS NULL, valoracion DESC')
+            ->paginate($perPage);
 
         return response()->json($libros);
     }
