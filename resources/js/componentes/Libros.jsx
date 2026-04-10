@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function Libros({ search }) {
   const [libros, setLibros] = useState([]);
@@ -7,6 +8,7 @@ export default function Libros({ search }) {
   const [loading, setLoading] = useState(false);
   const observerRef = useRef();
   const searchRef = useRef(search); // ref para tener siempre el search actual
+  const navigate = useNavigate();
 
 
   // Función para cargar libros
@@ -73,7 +75,8 @@ export default function Libros({ search }) {
             <div
               key={libro.id}
               ref={isLast ? lastLibroRef : null}
-              className="bg-[#FAF9F6] shadow-md rounded-xl border border-[#E5E5E5] hover:shadow-lg transition overflow-hidden flex flex-row"
+              onClick={() => navigate(`/libro/${libro.id}`)}
+              className="cursor-pointer bg-[#FAF9F6] bg-[#FAF9F6] shadow-md rounded-xl border border-[#E5E5E5] hover:shadow-lg transition overflow-hidden flex flex-row"
             >
               {/* Imagen izquierda */}
               <div className="w-28 flex-shrink-0 bg-[#E5E5E5] flex items-center justify-center">

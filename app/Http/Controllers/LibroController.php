@@ -29,4 +29,10 @@ class LibroController extends Controller
 
         return response()->json($libros);
     }
+
+    public function show($id)
+    {
+        $libro = Libro::findOrFail($id);
+        return response()->json($libro);
+    }
 }

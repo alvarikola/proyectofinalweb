@@ -1,5 +1,6 @@
 import React from "react";
 import { useState, useRef } from "react";
+import { Link } from "react-router-dom";
 
 function MySearchBar({ onSearch }) {
     const [expanded, setExpanded] = useState(false);
@@ -49,29 +50,29 @@ function MySearchBar({ onSearch }) {
 export default function MyNavBar({ onSearch }) {
     return (
         <header className="sticky top-0 z-30 mx-auto w-full max-w-screen-md border border-[#E5E5E5] bg-[#FAF9F6]/90 py-3 shadow-md backdrop-blur-lg md:top-6 md:rounded-3xl lg:max-w-screen-lg">
-            <div class="px-4">
-                <div class="flex items-center justify-between">
-                    <div class="flex shrink-0">
-                        <a aria-current="page" class="flex items-center" href="/">
-                            <img class="h-7 w-auto" src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg" alt=""/>
-                            <p class="sr-only">Website Title</p>
-                        </a>
+            <div className="px-4">
+                <div className="flex items-center justify-between">
+                    <div className="flex shrink-0">
+                        <Link to="/" className="flex items-center">
+                            <img className="h-7 w-auto" src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg" alt=""/>
+                            <p className="sr-only">Website Title</p>
+                        </Link>
                     </div>
-                    <div class="hidden md:flex md:items-center md:justify-center md:gap-5">
+                    <div className="hidden md:flex md:items-center md:justify-center md:gap-5">
                         <a aria-current="page"
                             className="inline-block rounded-lg px-3 py-1 text-sm font-medium text-[#3A3A3A] transition hover:bg-[#F5F5DC] hover:text-[#6B705C]"
                             href="#">Leídos</a>
                         <a className="inline-block rounded-lg px-3 py-1 text-sm font-medium text-[#3A3A3A] transition hover:bg-[#F5F5DC] hover:text-[#6B705C]"
                             href="#">Por leer</a>
                     </div>
-                    <div class="flex items-center justify-end gap-3">
+                    <div className="flex items-center justify-end gap-3">
                         <MySearchBar onSearch={onSearch} />
-                        <a
+                        <Link
+                            to={`/login`}
                             className="inline-flex items-center justify-center rounded-xl bg-[#C97B63] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#b96d56]"
-                            href="/login"
                         >
                             Login
-                        </a>
+                        </Link>
                     </div>
                 </div>
             </div>
