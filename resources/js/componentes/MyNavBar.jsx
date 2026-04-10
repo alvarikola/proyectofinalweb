@@ -1,13 +1,20 @@
 import React from "react";
 import { useState, useRef } from "react";
 
-function MySearchBar() {
+function MySearchBar({ onSearch }) {
     const [expanded, setExpanded] = useState(false);
+    const [query, setQuery] = useState("");
     const inputRef = useRef(null);
 
     const handleIconClick = () => {
         setExpanded(true);
         inputRef.current.focus();
+    };
+
+    const handleChange = (e) => {
+        const value = e.target.value;
+        setQuery(value);
+        onSearch(value);
     };
 
     return (
@@ -16,6 +23,8 @@ function MySearchBar() {
                 ref={inputRef}
                 type="text"
                 placeholder="Buscar..."
+                value={query}
+                onChange={handleChange}
                 className={`bg-[#FAF9F6] border border-[#A8A29E] h-10 px-5 pr-10 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-[#C97B63] transition-all duration-300 ${
                     expanded ? "w-64" : "w-12"
                 }`}
@@ -37,7 +46,7 @@ function MySearchBar() {
     );
 }
 
-export default function MyNavBar() {
+export default function MyNavBar({ onSearch }) {
     return (
         <header className="sticky top-0 z-30 mx-auto w-full max-w-screen-md border border-[#E5E5E5] bg-[#FAF9F6]/90 py-3 shadow-md backdrop-blur-lg md:top-6 md:rounded-3xl lg:max-w-screen-lg">
             <div class="px-4">
@@ -56,7 +65,7 @@ export default function MyNavBar() {
                             href="#">Por leer</a>
                     </div>
                     <div class="flex items-center justify-end gap-3">
-                        <MySearchBar />
+                        <MySearchBar onSearch={onSearch} />
                         <a
                             className="inline-flex items-center justify-center rounded-xl bg-[#C97B63] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#b96d56]"
                             href="/login"

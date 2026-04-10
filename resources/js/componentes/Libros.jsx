@@ -1,21 +1,29 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 
-export default function Libros() {
+export default function Libros({ search }) {
   const [libros, setLibros] = useState([]);
   const [page, setPage] = useState(1);          // página actual
   const [hasMore, setHasMore] = useState(true); // si hay más libros
   const [loading, setLoading] = useState(false);
   const observerRef = useRef();
+  const searchRef = useRef(search); // ref para tener siempre el search actual
+
 
   // Función para cargar libros
-  const fetchLibros = async (pageNumber) => {
+  const fetchLibros = async (pageNumber, searchTerm = "") => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/libros?per_page=12&page=${pageNumber}`);
+      const res = await fetch(`/api/libros?per_page=12&page=${pageNumber}&search=${searchTerm}`);
       const data = await res.json();
 
       // Laravel devuelve estructura {data: [...], current_page, last_page, ...}
-      setLibros(prev => [...prev, ...(data.data || [])]);
+      // Si es nueva búsqueda reemplaza resultados
+      if (pageNumber === 1) {
+        setLibros(data.data || []);
+      } else {
+        setLibros(prev => [...prev, ...(data.data || [])]);
+      }
+
       setHasMore(pageNumber < data.last_page);
     } catch (error) {
       console.error("Error cargando libros:", error);
@@ -25,7 +33,20 @@ export default function Libros() {
   };
 
   useEffect(() => {
-    fetchLibros(page);
+    searchRef.current = search;
+    const delay = setTimeout(() => {
+      setLibros([])
+      setPage(1);
+      setHasMore(true);
+      fetchLibros(1, search);
+    }, 400);
+
+    return () => clearTimeout(delay);
+  }, [search]);
+
+  useEffect(() => {
+    if (page === 1) return;
+    fetchLibros(page, searchRef.current);
   }, [page]);
 
   // Intersection Observer para infinite scroll
@@ -138,7 +159,6 @@ export default function Libros() {
         })}
 
         {loading && <p className="text-[#A8A29E] col-span-3 text-center mt-4">Cargando más libros...</p>}
-        {!hasMore && <p className="text-[#A8A29E] col-span-3 text-center mt-4">No hay más libros</p>}
       </div>
     </div>
   );
