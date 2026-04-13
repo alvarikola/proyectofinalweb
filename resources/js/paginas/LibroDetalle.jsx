@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Link } from "react-router-dom";
 import MyNavBar from "../componentes/MyNavBar";
+import ResenaCard from "../componentes/ResenaCard";
 
 export default function LibroDetalle() {
     const { id } = useParams();
@@ -146,42 +147,9 @@ export default function LibroDetalle() {
                         <p className="text-[#A8A29E] text-sm">Todavía no hay reseñas para este libro.</p>
                     )}
 
-                    {resenas.map(resena => {
-                        let contenido = {};
-                        try {
-                            contenido = JSON.parse(resena.contenido) || {};
-                        } catch {
-                            contenido = { general: resena.contenido };
-                        }
-
-                        return (
-                            <div key={resena.id} className="bg-[#FAF9F6] rounded-2xl shadow-md p-6">
-                                <div className="flex items-center justify-between mb-3">
-                                    <Estrellas rating={resena.puntuacionEstrellas ?? 0} />
-                                    <span className="text-xs text-[#A8A29E]">
-                                        {new Date(resena.created_at).toLocaleDateString("es-ES", {
-                                            day: "numeric", month: "long", year: "numeric"
-                                        })}
-                                    </span>
-                                </div>
-
-                                {/* Contenido general */}
-                                {contenido.general && (
-                                    <p className="text-sm leading-relaxed text-[#3A3A3A] mb-4">{contenido.general}</p>
-                                )}
-
-                                {/* Módulos */}
-                                <div className="space-y-4">
-                                    {MODULOS_INFO.filter(m => contenido[m.key]).map(({ key, label, emoji }) => (
-                                        <div key={key} className="border-t border-[#E5E5E5] pt-4">
-                                            <h4 className="text-sm font-semibold text-[#6B705C] mb-2">{emoji} {label}</h4>
-                                            <p className="text-sm leading-relaxed text-[#3A3A3A]">{contenido[key]}</p>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        );
-                    })}
+                    {resenas.map(resena => (
+                        <ResenaCard key={resena.id} resena={resena} />
+                    ))}
                 </div>
             </div>
         </div>

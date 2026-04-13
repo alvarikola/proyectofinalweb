@@ -29,4 +29,9 @@ class Resena extends Model
     {
         return $this->belongsTo(Libro::class, 'idLibro');
     }
+
+    public function usuario()
+    {
+        return $this->belongsTo(Usuario::class, 'idUsuario');
+    }
 }

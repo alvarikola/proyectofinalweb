@@ -10,7 +10,8 @@ class ResenaController extends Controller
 {
     public function index($idLibro)
     {
-        $resenas = Resena::where('idLibro', $idLibro)
+        $resenas = Resena::with('usuario')
+            ->where('idLibro', $idLibro)
             ->orderBy('created_at', 'desc')
             ->get();
 
