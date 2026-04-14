@@ -35,6 +35,33 @@ const Estrellas = ({ rating }) => (
     </div>
 );
 
+const SpoilerBloque = ({ texto, cortado }) => {
+    const [visible, setVisible] = useState(false);
+
+    return (
+        <div className="relative">
+            <p
+                style={{ wordBreak: "break-word" }}
+                className={`text-sm leading-relaxed text-[#3A3A3A] transition-all duration-300 ${
+                    visible ? "" : "blur-sm select-none"
+                }`}
+            >
+                {texto}{cortado ? "..." : ""}
+            </p>
+            {!visible && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                    <button
+                        onClick={() => setVisible(true)}
+                        className="bg-[#3A3A3A] text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-[#6B705C] transition"
+                    >
+                        ⚠️ Ver spoiler
+                    </button>
+                </div>
+            )}
+        </div>
+    );
+};
+
 const LIMITE_CHARS = 150;
 const LIMITE_MODULOS = 2;
 
@@ -132,15 +159,22 @@ export default function ResenaCard({ resena }) {
             {/* Módulos */}
             {modulosAMostrar.length > 0 && (
                 <div className="space-y-4">
-                    {modulosAMostrar.map(({ key, label, emoji, textoCortado }) => (
-                        <div key={key} className="border-t border-[#E5E5E5] pt-4">
-                            <h4 className="text-sm font-semibold text-[#6B705C] mb-2">{emoji} {label}</h4>
-                            <p style={{ wordBreak: "break-word" }} className="text-sm leading-relaxed text-[#3A3A3A]">
-                                {textoCortado ?? String(contenido[key] || "")}
-                                {textoCortado ? "..." : ""}
-                            </p>
-                        </div>
-                    ))}
+                    {modulosAMostrar.map(({ key, label, emoji, textoCortado }) => {
+                        const textoModulo = textoCortado ?? String(contenido[key] || "");
+                        const esSpoiler = key === "spoilers";
+
+                        return (
+                            <div key={key} className="border-t border-[#E5E5E5] pt-4">
+                                <h4 className="text-sm font-semibold text-[#6B705C] mb-2">{emoji} {label}</h4>
+                                {esSpoiler
+                                    ? <SpoilerBloque texto={textoModulo} cortado={!!textoCortado} />
+                                    : <p style={{ wordBreak: "break-word" }} className="text-sm leading-relaxed text-[#3A3A3A]">
+                                        {textoModulo}{textoCortado ? "..." : ""}
+                                      </p>
+                                }
+                            </div>
+                        );
+                    })}
                 </div>
             )}
 
