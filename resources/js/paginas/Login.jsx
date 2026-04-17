@@ -1,9 +1,30 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { Link } from "react-router-dom";
 
 export default function Home() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
+  const [cargando, setCargando] = useState(false);
+  const { login } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setCargando(true);
+    try {
+        await login(email, password);
+        navigate("/");
+    } catch (err) {
+        setError(err.message);
+    } finally {
+        setCargando(false);
+    }
+};
 
   return (
     <div className="bg-[#F5F5DC] min-h-screen">
@@ -20,7 +41,7 @@ export default function Home() {
         <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
           <div className="bg-[#FAF9F6] px-6 pb-6 pt-8 sm:rounded-xl sm:shadow-md border border-[#E5E5E5]">
 
-            <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
+            <form className="space-y-6" onSubmit={handleSubmit}>
               
               {/* EMAIL */}
               <div>
@@ -38,7 +59,7 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* PASSWORD */}
+              {/* CONTRASEÑA */}
               <div className="relative">
                 <label className="block text-sm font-medium text-[#3A3A3A]">
                   Contraseña
@@ -77,9 +98,10 @@ export default function Home() {
               <div>
                 <button
                   type="submit"
+                  disabled={cargando}
                   className="w-full rounded-md bg-[#C97B63] px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-[#b96d56] focus:outline-none focus:ring-2 focus:ring-[#C97B63]"
                 >
-                  Entrar
+                  {cargando ? "Entrando..." : "Entrar"}
                 </button>
               </div>
             </form>
@@ -89,12 +111,12 @@ export default function Home() {
               <span className="text-[#A8A29E]">
                 ¿No tienes cuenta?
               </span>{" "}
-              <a
-                href="/register"
+              <Link
+                to="/register"
                 className="font-semibold text-[#6B705C] hover:underline"
               >
                 Crear cuenta
-              </a>
+              </Link>
             </div>
 
           </div>
