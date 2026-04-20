@@ -238,7 +238,7 @@ export default function Register() {
                 ¿Ya tienes cuenta?
               </span>{" "}
               <Link
-                to="/login"
+                to={`/login${location.search}`} // Conserva ?from=...
                 className="font-semibold text-[#6B705C] hover:underline"
               >
                 Iniciar sesión

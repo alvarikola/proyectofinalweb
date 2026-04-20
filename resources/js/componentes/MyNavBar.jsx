@@ -1,6 +1,7 @@
 import React, { useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext"; // Importa el contexto
+import logoSinFondo from "../logoSinFondo.png";
 
 // Barra de búsqueda del navBar
 function MySearchBar({ onSearch }) {
@@ -66,7 +67,7 @@ export default function MyNavBar({ onSearch }) {
                     {/* LOGO */}
                     <div className="flex shrink-0">
                         <Link to="/" className="flex items-center">
-                            <img className="h-7 w-auto" src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg" alt="Logo" />
+                            <img className="h-15 w-auto" src={logoSinFondo} alt="Logo" />
                             <p className="sr-only">Website Title</p>
                         </Link>
                     </div>

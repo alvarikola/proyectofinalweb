@@ -20,14 +20,29 @@ class ResenaController extends Controller
 
     public function store(Request $request, $idLibro)
     {
+        $usuario = $request->user();
+
+        if (!$usuario) {
+            return response()->json(['message' => 'No autenticado'], 401);
+        }
+
         $request->validate([
             'puntuacionEstrellas' => 'required|numeric|between:1,5',
             'contenido' => 'nullable|string',
         ]);
 
+        // evitar que un usuario reseñe el mismo libro dos veces
+        $yaReseño = Resena::where('idLibro', $idLibro)
+                         ->where('idUsuario', $usuario->id)
+                         ->exists();
+        
+        if ($yaReseño) {
+            return response()->json(['message' => 'Ya has reseñado este libro'], 409);
+        }
+
         $resena = Resena::create([
             'idLibro' => $idLibro,
-            'idUsuario' => null, // cuando implementes auth: auth()->id()
+            'idUsuario' => $usuario->id,
             'puntuacionEstrellas' => $request->puntuacionEstrellas,
             'puntuacionChilis' => null,
             'contenido' => $request->contenido,
@@ -42,6 +57,6 @@ class ResenaController extends Controller
             'calificaciones' => $total,
         ]);
 
-        return response()->json($resena, 201);
+        return response()->json($resena->load('usuario'), 201);
     }
 }

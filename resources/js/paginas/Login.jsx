@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { Link } from "react-router-dom";
+import { useLocation, Link } from "react-router-dom";
 
 export default function Home() {
   const [email, setEmail] = useState("");
@@ -11,6 +11,7 @@ export default function Home() {
   const [cargando, setCargando] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -18,7 +19,9 @@ export default function Home() {
     setCargando(true);
     try {
         await login(email, password);
-        navigate("/");
+        const searchParams = new URLSearchParams(window.location.search);
+        const from = searchParams.get('from') || '/';
+        navigate(from, { replace: true });
     } catch (err) {
         setError(err.message);
     } finally {
@@ -112,7 +115,7 @@ export default function Home() {
                 ¿No tienes cuenta?
               </span>{" "}
               <Link
-                to="/register"
+                to={`/register${location.search}`} // Conserva ?from=...
                 className="font-semibold text-[#6B705C] hover:underline"
               >
                 Crear cuenta

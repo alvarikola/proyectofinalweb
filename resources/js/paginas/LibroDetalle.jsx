@@ -1,44 +1,38 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import { Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext"; // Importar contexto
 import MyNavBar from "../componentes/MyNavBar";
 import ResenaCard from "../componentes/ResenaCard";
+import LoginPrompt from "../componentes/LoginPrompt";
+const API_URL = import.meta.env.VITE_API_URL;
 
 export default function LibroDetalle() {
     const { id } = useParams();
     const [libro, setLibro] = useState(null);
     const [resenas, setResenas] = useState([]);
-
-    const MODULOS_INFO = [
-        { key: "personajes", label: "Personajes", emoji: "✨" },
-        { key: "musica", label: "Música Recomendada", emoji: "🎧" },
-        { key: "citas", label: "Citas Favoritas", emoji: "💬" },
-        { key: "spoilers", label: "Alerta de Spoilers", emoji: "⚠️" },
-        { key: "comparacion", label: "Comparar con Otros Libros", emoji: "📊" },
-        { key: "momentos", label: "Momentos Clave", emoji: "💥" },
-    ];
+    const navigate = useNavigate(); // Para redirigir al login
+    const { usuario } = useAuth();  // Estado de autenticación
+    const [showLoginPrompt, setShowLoginPrompt] = useState(false);
 
     useEffect(() => {
-        fetch(`/api/libros/${id}`)
+        // API_URL completa
+        fetch(`${API_URL}/api/libros/${id}`, {
+            headers: { Accept: 'application/json' }
+        })
             .then(r => r.json())
-            .then(setLibro);
+            .then(setLibro)
+            .catch(err => console.error('Error cargando libro:', err));
+            
         cargarResenas();
     }, [id]);
 
     const cargarResenas = () => {
-        fetch(`/api/libros/${id}/resenas`)
+        fetch(`${API_URL}/api/libros/${id}/resenas`, {
+            headers: { Accept: 'application/json' }
+        })
             .then(r => r.json())
-            .then(setResenas);
-    };
-
-    const parsearGenero = (genero) => {
-        if (!genero) return null;
-        try {
-            const parsed = JSON.parse(genero);
-            return Array.isArray(parsed) ? parsed.join(", ") : genero;
-        } catch {
-            return genero;
-        }
+            .then(setResenas)
+            .catch(err => console.error('Error cargando reseñas:', err));
     };
 
     const Estrellas = ({ rating }) => (
@@ -128,13 +122,25 @@ export default function LibroDetalle() {
                     </div>
                 </div>
 
+                {/* BOTÓN CONDICIONAL: Solo si está logueado */}
                 <div className="flex justify-end mb-6">
-                    <Link
-                        to={`/libro/${id}/resena/nueva`}
-                        className="bg-[#C97B63] text-white px-5 py-2 rounded-xl text-sm font-semibold hover:bg-[#b96d56] transition"
-                    >
-                        Escribir reseña
-                    </Link>
+                    {usuario ? (
+                        // Usuario logueado: botón normal
+                        <Link
+                            to={`/libro/${id}/resena/nueva`}
+                            className="bg-[#C97B63] text-white px-5 py-2 rounded-xl text-sm font-semibold hover:bg-[#b96d56] transition"
+                        >
+                            Escribir reseña
+                        </Link>
+                    ) : (
+                        // Usuario NO logueado: botón que abre el modal
+                        <button
+                            onClick={() => setShowLoginPrompt(true)}
+                            className="bg-[#F5F5DC] text-[#6B705C] border border-[#E5E5E5] px-5 py-2 rounded-xl text-sm font-semibold hover:bg-[#E5E5E5] transition"
+                        >
+                            Escribir reseña
+                        </button>
+                    )}
                 </div>
                 
                 {/* Reseñas */}
@@ -152,6 +158,13 @@ export default function LibroDetalle() {
                     ))}
                 </div>
             </div>
+            {/* Renderiza el modal condicionalmente */}
+            {showLoginPrompt && (
+                <LoginPrompt 
+                    onClose={() => setShowLoginPrompt(false)} 
+                    libroId={id} 
+                />
+            )}
         </div>
     );
 }
