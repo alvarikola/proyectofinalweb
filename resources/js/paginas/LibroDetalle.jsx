@@ -1,24 +1,32 @@
 import { useEffect, useState } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext"; // Importar contexto
+import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
+import { useAuth, useApiClient } from "@webbydevs/react-laravel-sanctum-auth"; // ← Nuevos hooks
 import MyNavBar from "../componentes/MyNavBar";
 import ResenaCard from "../componentes/ResenaCard";
 import LoginPrompt from "../componentes/LoginPrompt";
-const API_URL = import.meta.env.VITE_API_URL;
 
 export default function LibroDetalle() {
     const { id } = useParams();
+    const location = useLocation();
+    
     const [libro, setLibro] = useState(null);
     const [resenas, setResenas] = useState([]);
-    const navigate = useNavigate(); // Para redirigir al login
-    const { usuario } = useAuth();  // Estado de autenticación
+    
+    // ✅ Hooks del nuevo paquete
+    const { user } = useAuth(); // ← user en vez de usuario
+    const apiClient = useApiClient(); // ← Axios pre-configurado con cookies/CSRF
+    
+    const navigate = useNavigate();
     const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+    
+    // Estado para la reseña del usuario actual
+    const [miResena, setMiResena] = useState(null);
+    const [cargandoMiResena, setCargandoMiResena] = useState(false);
 
+    // Cargar datos del libro y reseñas públicas
     useEffect(() => {
-        // API_URL completa
-        fetch(`${API_URL}/api/libros/${id}`, {
-            headers: { Accept: 'application/json' }
-        })
+        // Libros y reseñas son públicos → no necesitan auth
+        fetch(`/api/libros/${id}`, { headers: { Accept: 'application/json' } })
             .then(r => r.json())
             .then(setLibro)
             .catch(err => console.error('Error cargando libro:', err));
@@ -26,10 +34,23 @@ export default function LibroDetalle() {
         cargarResenas();
     }, [id]);
 
+    // Cargar MI reseña si estoy logueado (ruta protegida)
+    useEffect(() => {
+        if (!user) {
+            setMiResena(null);
+            return;
+        }
+        
+        setCargandoMiResena(true);
+        // ✅ useApiClient maneja automáticamente cookies y CSRF
+        apiClient.get(`/api/mis-resenas/libro/${id}`)
+            .then(({ data }) => setMiResena(data))
+            .catch(() => setMiResena(null))
+            .finally(() => setCargandoMiResena(false));
+    }, [user, id, apiClient]);
+
     const cargarResenas = () => {
-        fetch(`${API_URL}/api/libros/${id}/resenas`, {
-            headers: { Accept: 'application/json' }
-        })
+        fetch(`/api/libros/${id}/resenas`, { headers: { Accept: 'application/json' } })
             .then(r => r.json())
             .then(setResenas)
             .catch(err => console.error('Error cargando reseñas:', err));
@@ -66,6 +87,10 @@ export default function LibroDetalle() {
             <p className="text-[#A8A29E]">Cargando...</p>
         </div>
     );
+
+    // Adaptar campos del usuario (tu backend usa 'nombre', el paquete espera 'name')
+    const nombre = user?.nombre || user?.name || "";
+    const email = user?.email || "";
 
     return (
         <div className="bg-[#F5F5DC] min-h-screen text-[#3A3A3A]">
@@ -122,18 +147,32 @@ export default function LibroDetalle() {
                     </div>
                 </div>
 
-                {/* BOTÓN CONDICIONAL: Solo si está logueado */}
+                {/* ✅ BOTÓN CONDICIONAL: Crear o Editar reseña */}
                 <div className="flex justify-end mb-6">
-                    {usuario ? (
-                        // Usuario logueado: botón normal
-                        <Link
-                            to={`/libro/${id}/resena/nueva`}
-                            className="bg-[#C97B63] text-white px-5 py-2 rounded-xl text-sm font-semibold hover:bg-[#b96d56] transition"
-                        >
-                            Escribir reseña
-                        </Link>
+                    {user ? (
+                        cargandoMiResena ? (
+                            <button disabled className="bg-[#E5E5E5] text-[#A8A29E] px-5 py-2 rounded-xl text-sm font-semibold">
+                                Cargando...
+                            </button>
+                        ) : miResena ? (
+                            // ✅ Tiene reseña → Botón "Editar" con ID
+                            <Link
+                                to={`/libro/${id}/resena/editar?resenaId=${miResena.id}`}
+                                className="bg-[#6B705C] text-white px-5 py-2 rounded-xl text-sm font-semibold hover:bg-[#5a5f4d] transition"
+                            >
+                                ✏️ Editar tu reseña
+                            </Link>
+                        ) : (
+                            // ✅ No tiene reseña → Botón "Escribir"
+                            <Link
+                                to={`/libro/${id}/resena/nueva`}
+                                className="bg-[#C97B63] text-white px-5 py-2 rounded-xl text-sm font-semibold hover:bg-[#b96d56] transition"
+                            >
+                                Escribir reseña
+                            </Link>
+                        )
                     ) : (
-                        // Usuario NO logueado: botón que abre el modal
+                        // 🔓 No logueado → Abre LoginPrompt
                         <button
                             onClick={() => setShowLoginPrompt(true)}
                             className="bg-[#F5F5DC] text-[#6B705C] border border-[#E5E5E5] px-5 py-2 rounded-xl text-sm font-semibold hover:bg-[#E5E5E5] transition"
@@ -158,7 +197,8 @@ export default function LibroDetalle() {
                     ))}
                 </div>
             </div>
-            {/* Renderiza el modal condicionalmente */}
+
+            {/* Modal de Login para no logueados */}
             {showLoginPrompt && (
                 <LoginPrompt 
                     onClose={() => setShowLoginPrompt(false)} 

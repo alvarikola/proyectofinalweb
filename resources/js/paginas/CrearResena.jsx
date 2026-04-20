@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useParams, useNavigate, useLocation, useSearchParams } from "react-router-dom";
+import { useAuth, useApiClient } from "@webbydevs/react-laravel-sanctum-auth";
 import MyNavBar from "../componentes/MyNavBar";
 
 const MODULOS = [
@@ -13,13 +14,54 @@ const MODULOS = [
 
 export default function CrearResena() {
     const { id } = useParams();
+    const location = useLocation();
+    const [searchParams] = useSearchParams();
     const navigate = useNavigate();
-
+    
+    // Hooks del nuevo paquete
+    const { user } = useAuth();
+    const apiClient = useApiClient();
+    
+    // Detectar modo edición desde la URL: /libro/:id/resena/editar?resenaId=123
+    const esEdicion = location.pathname.includes('/editar');
+    const resenaId = searchParams.get('resenaId');
+    
     const [puntuacion, setPuntuacion] = useState(0);
     const [hovered, setHovered] = useState(0);
     const [modulosActivos, setModulosActivos] = useState([]);
     const [contenido, setContenido] = useState({ general: "" });
     const [enviando, setEnviando] = useState(false);
+    const [eliminando, setEliminando] = useState(false);
+    const [error, setError] = useState("");
+    const [cargando, setCargando] = useState(esEdicion); // Si es edición, cargamos datos
+
+    // Cargar datos si es edición
+    useEffect(() => {
+        if (!esEdicion || !resenaId) {
+            setCargando(false);
+            return;
+        }
+
+        // ✅ useApiClient maneja automáticamente cookies y CSRF
+        apiClient.get(`/api/resenas/${resenaId}`)
+            .then(({ data }) => {
+                setPuntuacion(data.puntuacionEstrellas);
+                
+                // Parsear contenido JSON si está stringificado
+                try {
+                    const parsed = JSON.parse(data.contenido);
+                    setContenido(parsed);
+                    setModulosActivos(Object.keys(parsed).filter(k => k !== "general"));
+                } catch {
+                    setContenido({ general: data.contenido });
+                }
+            })
+            .catch(err => {
+                console.error("Error cargando reseña:", err);
+                setError("No se pudo cargar tu reseña");
+            })
+            .finally(() => setCargando(false));
+    }, [esEdicion, resenaId, apiClient]);
 
     const toggleModulo = (key) => {
         if (modulosActivos.includes(key)) {
@@ -39,28 +81,70 @@ export default function CrearResena() {
         setContenido(prev => ({ ...prev, [key]: value }));
     };
 
-    const enviar = async () => {
-        if (puntuacion === 0) return alert("Selecciona una puntuación");
+    const handleSubmit = async () => {
+        if (puntuacion === 0) return setError("Selecciona una puntuación");
+        if (!contenido.general?.trim()) return setError("Escribe tu opinión general");
 
+        setError("");
         setEnviando(true);
-        await fetch(`/api/libros/${id}/resenas`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                puntuacionEstrellas: puntuacion,
-                contenido: JSON.stringify(contenido),
-            }),
-        });
-        setEnviando(false);
-        navigate(`/libro/${id}`);
+
+        try {
+            const method = esEdicion ? "PUT" : "POST";
+            const url = esEdicion 
+                ? `/api/resenas/${resenaId}`
+                : `/api/libros/${id}/resenas`;
+
+            // ✅ useApiClient maneja automáticamente cookies y CSRF
+            const { data } = await apiClient({
+                method,
+                url,
+                headers: { "Content-Type": "application/json" },
+                data: {
+                    puntuacionEstrellas: puntuacion,
+                    contenido: JSON.stringify(contenido),
+                },
+            });
+
+            navigate(`/libro/${id}`);
+        } catch (err) {
+            setError(err.response?.data?.message || err.message || "Error al guardar");
+        } finally {
+            setEnviando(false);
+        }
     };
+
+    const handleEliminar = async () => {
+        if (!resenaId || !confirm("¿Eliminar tu reseña? Esta acción no se puede deshacer.")) return;
+        
+        setEliminando(true);
+        try {
+            // ✅ useApiClient maneja automáticamente cookies y CSRF
+            await apiClient.delete(`/api/resenas/${resenaId}`);
+            navigate(`/libro/${id}`);
+        } catch (err) {
+            setError(err.response?.data?.message || err.message || "Error al eliminar");
+        } finally {
+            setEliminando(false);
+        }
+    };
+
+    // Loading state para edición
+    if (cargando) {
+        return (
+            <div className="bg-[#F5F5DC] min-h-screen flex items-center justify-center">
+                <p className="text-[#A8A29E]">Cargando tu reseña...</p>
+            </div>
+        );
+    }
 
     return (
         <div className="bg-[#F5F5DC] min-h-screen text-[#3A3A3A]">
             <MyNavBar onSearch={() => {}} />
 
             <div className="max-w-2xl mx-auto px-6 py-12">
-                <h1 className="text-2xl font-bold mb-8 text-center">Crear Reseña</h1>
+                <h1 className="text-2xl font-bold mb-8 text-center">
+                    {esEdicion ? "Editar tu reseña" : "Crear nueva reseña"}
+                </h1>
 
                 <div className="bg-[#FAF9F6] rounded-2xl shadow-md p-8 space-y-8">
 
@@ -87,11 +171,11 @@ export default function CrearResena() {
                         </div>
                     </div>
 
-                    {/* Opinion general */}
+                    {/* Opinión general */}
                     <div>
                         <h2 className="text-sm font-semibold text-[#6B705C] mb-3">Tu Opinión</h2>
                         <textarea
-                            value={contenido.general}
+                            value={contenido.general || ""}
                             onChange={e => handleContenido("general", e.target.value)}
                             placeholder="Escribe tu reseña aquí..."
                             className="w-full border border-[#E5E5E5] rounded-xl px-4 py-3 text-sm resize-none h-36 focus:outline-none focus:ring-2 focus:ring-[#C97B63] bg-white"
@@ -135,15 +219,33 @@ export default function CrearResena() {
                         </div>
                     </div>
 
-                    {/* Botón enviar */}
-                    <button
-                        type="button"
-                        onClick={enviar}
-                        disabled={enviando}
-                        className="w-full bg-[#C97B63] text-white py-3 rounded-xl font-semibold hover:bg-[#b96d56] transition disabled:opacity-50"
-                    >
-                        {enviando ? "Publicando..." : "Publicar Reseña"}
-                    </button>
+                    {/* Error */}
+                    {error && (
+                        <p className="text-sm text-[#C97B63] text-center font-medium">{error}</p>
+                    )}
+
+                    {/* Botones de acción */}
+                    <div className="flex gap-3">
+                        <button
+                            type="button"
+                            onClick={handleSubmit}
+                            disabled={enviando}
+                            className="flex-1 bg-[#C97B63] text-white py-3 rounded-xl font-semibold hover:bg-[#b96d56] transition disabled:opacity-50"
+                        >
+                            {enviando ? "Guardando..." : (esEdicion ? "Guardar cambios" : "Publicar reseña")}
+                        </button>
+                        
+                        {esEdicion && (
+                            <button
+                                type="button"
+                                onClick={handleEliminar}
+                                disabled={eliminando}
+                                className="px-6 py-3 rounded-xl font-semibold text-[#C97B63] border border-[#C97B63] hover:bg-[#C97B63]/10 transition disabled:opacity-50"
+                            >
+                                {eliminando ? "..." : "Eliminar"}
+                            </button>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>

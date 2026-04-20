@@ -1,6 +1,6 @@
 import React, { useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext"; // Importa el contexto
+import { useAuth, useLogout } from "@webbydevs/react-laravel-sanctum-auth"; // ← Nueva importación
 import logoSinFondo from "../logoSinFondo.png";
 
 // Barra de búsqueda del navBar
@@ -45,20 +45,40 @@ function MySearchBar({ onSearch }) {
     );
 }
 
-// Funcion del navBar
+// Función del navBar
 export default function MyNavBar({ onSearch }) {
-    const { usuario, logout } = useAuth(); // Obtener estado de autenticación
+    // ✅ Hook del nuevo paquete: devuelve `user` en vez de `usuario`
+    const { user } = useAuth();
+    const { logout } = useLogout(); // ← Hook separado para logout
+    
     const [menuAbierto, setMenuAbierto] = useState(false);
     const navigate = useNavigate();
 
+    
     const handleLogout = async () => {
         try {
-            await logout();
+            await logout(); // Hook del paquete
+            setMenuAbierto(false);
             navigate("/login");
         } catch (error) {
+            // ✅ Si es 401, significa que la sesión ya no existía → igual redirigimos
+            if (error?.response?.status === 401) {
+                console.warn("Sesión ya expirada, cerrando igualmente");
+                setMenuAbierto(false);
+                navigate("/login");
+                return;
+            }
+            // Otros errores sí los mostramos
             console.error("Error al cerrar sesión:", error);
         }
     };
+
+    // ✅ Adaptar los campos de tu backend al formato esperado
+    // Si tu Laravel devuelve { nombre, email, imagen_perfil }, úsalos directamente:
+    const nombre = user?.nombre || user?.name || "";
+    const email = user?.email || "";
+    const imagen_perfil = user?.imagen_perfil || user?.avatar || null;
+    const iniciales = nombre?.charAt(0)?.toUpperCase() || "U";
 
     return (
         <header className="sticky top-0 z-30 mx-auto w-full max-w-screen-md border border-[#E5E5E5] bg-[#FAF9F6]/90 py-3 shadow-md backdrop-blur-lg md:top-6 md:rounded-3xl lg:max-w-screen-lg">
@@ -93,26 +113,24 @@ export default function MyNavBar({ onSearch }) {
                         <MySearchBar onSearch={onSearch} />
 
                         {/* USUARIO LOGUEADO */}
-                        {usuario ? (
+                        {user ? (
                         <div className="relative">
                             {/* Avatar con dropdown */}
                             <button
                             onClick={() => setMenuAbierto(!menuAbierto)}
                             className="flex h-9 w-9 items-center justify-center rounded-full bg-[#C97B63] text-white font-semibold text-sm shadow-sm hover:bg-[#b96d56] transition overflow-hidden"
-                            title={usuario.nombre || usuario.email}
+                            title={nombre || email}
                             >
-                            {usuario.imagen_perfil ? (
+                            {imagen_perfil ? (
                                 // Muestra imagen si existe
                                 <img
-                                src={usuario.imagen_perfil}
+                                src={imagen_perfil}
                                 alt="Avatar"
                                 className="h-full w-full object-cover"
                                 />
                             ) : (
                                 // Muestra iniciales si no hay imagen
-                                <span>
-                                {usuario.nombre?.charAt(0)?.toUpperCase() || "U"}
-                                </span>
+                                <span>{iniciales}</span>
                             )}
                             </button>
 
@@ -123,10 +141,10 @@ export default function MyNavBar({ onSearch }) {
                                 <div className="absolute right-0 mt-2 w-48 rounded-xl bg-[#FAF9F6] border border-[#E5E5E5] shadow-lg py-1 z-20">
                                 <div className="px-4 py-2 border-b border-[#E5E5E5]">
                                     <p className="text-sm font-medium text-[#3A3A3A] truncate">
-                                    {usuario.nombre || "Usuario"}
+                                    {nombre || "Usuario"}
                                     </p>
                                     <p className="text-xs text-[#A8A29E] truncate">
-                                    {usuario.email}
+                                    {email}
                                     </p>
                                 </div>
                                 <Link

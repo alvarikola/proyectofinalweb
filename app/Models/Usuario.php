@@ -25,4 +25,10 @@ class Usuario extends Authenticatable
     protected $hidden = [
         'password',
     ];
+
+    // ✅ AGREGA ESTO: Convierte 'nombre' en 'name' automáticamente
+    public function getNameAttribute()
+    {
+        return $this->nombre;
+    }
 }

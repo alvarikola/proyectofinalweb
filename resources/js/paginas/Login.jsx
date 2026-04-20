@@ -1,7 +1,6 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
-import { useLocation, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
+import { useLogin } from "@webbydevs/react-laravel-sanctum-auth";
 
 export default function Home() {
   const [email, setEmail] = useState("");
@@ -9,7 +8,10 @@ export default function Home() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [cargando, setCargando] = useState(false);
-  const { login } = useAuth();
+  
+  // Hook del nuevo paquete
+  const { login } = useLogin();
+  
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -17,17 +19,27 @@ export default function Home() {
     e.preventDefault();
     setError("");
     setCargando(true);
+    
     try {
-        await login(email, password);
+      // ✅ El paquete espera un objeto { email, password }
+      const result = await login({ email, password });
+      
+      if (result.success) {
+        // Redirigir a la página de origen o al home
         const searchParams = new URLSearchParams(window.location.search);
         const from = searchParams.get('from') || '/';
         navigate(from, { replace: true });
+      } else {
+        // El paquete puede devolver un mensaje de error
+        setError(result.message || "Error al iniciar sesión");
+      }
     } catch (err) {
-        setError(err.message);
+      // Errores de red o del paquete
+      setError(err.message || "Error de conexión con el servidor");
     } finally {
-        setCargando(false);
+      setCargando(false);
     }
-};
+  };
 
   return (
     <div className="bg-[#F5F5DC] min-h-screen">
@@ -53,7 +65,7 @@ export default function Home() {
                 </label>
                 <div className="mt-1">
                   <input
-                    type="text"
+                    type="email"  // ← Corregido: type="email" para validación nativa
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
@@ -97,12 +109,19 @@ export default function Home() {
                 </div>
               </div>
 
+              {/* ERROR */}
+              {error && (
+                <p className="text-sm text-[#C97B63] text-center font-medium">
+                  {error}
+                </p>
+              )}
+
               {/* BOTÓN */}
               <div>
                 <button
                   type="submit"
                   disabled={cargando}
-                  className="w-full rounded-md bg-[#C97B63] px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-[#b96d56] focus:outline-none focus:ring-2 focus:ring-[#C97B63]"
+                  className="w-full rounded-md bg-[#C97B63] px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-[#b96d56] focus:outline-none focus:ring-2 focus:ring-[#C97B63] disabled:opacity-50"
                 >
                   {cargando ? "Entrando..." : "Entrar"}
                 </button>
@@ -115,7 +134,7 @@ export default function Home() {
                 ¿No tienes cuenta?
               </span>{" "}
               <Link
-                to={`/register${location.search}`} // Conserva ?from=...
+                to={`/register${location.search}`}
                 className="font-semibold text-[#6B705C] hover:underline"
               >
                 Crear cuenta

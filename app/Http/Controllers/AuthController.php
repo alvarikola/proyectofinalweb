@@ -9,7 +9,7 @@ use App\Models\Usuario;
 
 class AuthController extends Controller
 {
-    // Funcion para hace login con un usuario existente
+    // Login con usuario existente
     public function login(Request $request)
     {
         $credentials = $request->validate([
@@ -22,23 +22,19 @@ class AuthController extends Controller
         }
 
         $request->session()->regenerate();
+        $user = Auth::user();
 
-        $usuario = Auth::user();
-
-        // Devuelve los campos que el frontend espera
+        // ✅ CORRECTO: Devuelve SOLO el objeto user (sin envolver)
         return response()->json([
-            'usuario' => [
-                'id' => $usuario->id,
-                'nombre' => $usuario->nombre,
-                'email' => $usuario->email,
-                'imagen_perfil' => $usuario->imagen_perfil,
-                'rol' => $usuario->rol,
-            ],
-            'message' => 'Login exitoso'
-        ], 200);
+            'id' => $user->id,
+            'name' => $user->nombre,
+            'email' => $user->email,
+            'imagen_perfil' => $user->imagen_perfil,
+            'rol' => $user->rol,
+        ]);
     }
 
-    // Funcion para cerrar sesion del usuario actual
+    // Cerrar sesión
     public function logout(Request $request)
     {
         Auth::guard('web')->logout();
@@ -47,23 +43,25 @@ class AuthController extends Controller
         return response()->json(['message' => 'Sesión cerrada']);
     }
 
-    // Funcion para obtener el usuario actual
+    // Obtener usuario actual
     public function me(Request $request)
     {
-        $usuario = $request->user();
-        if (!$usuario) {
+        $user = $request->user();
+        if (!$user) {
             return response()->json(['message' => 'No autenticado'], 401);
         }
+        
+        // ✅ Devuelve 'name' mapeado desde 'nombre'
         return response()->json([
-            'id' => $usuario->id,
-            'nombre' => $usuario->nombre,
-            'email' => $usuario->email,
-            'imagen_perfil' => $usuario->imagen_perfil,
-            'rol' => $usuario->rol,
+            'id' => $user->id,
+            'name' => $user->nombre,
+            'email' => $user->email,
+            'imagen_perfil' => $user->imagen_perfil,
+            'rol' => $user->rol,
         ]);
     }
 
-    // Funcion para registrar un nuevo usuario
+    // Registrar nuevo usuario
     public function register(Request $request)
     {
         $validated = $request->validate([
@@ -72,18 +70,20 @@ class AuthController extends Controller
             'password' => 'required|string|min:8|confirmed',
         ]);
 
-        $usuario = \App\Models\Usuario::create([
+        $user = \App\Models\Usuario::create([
             'nombre' => $validated['nombre'],
             'email' => $validated['email'],
-            'password' => Hash::make($validated['password']), // Encriptación de contraseña para laravel
+            'password' => Hash::make($validated['password']),
             'rol' => 'user',
         ]);
 
+        // ✅ Devuelve 'user' con 'name' mapeado
         return response()->json([
-            'usuario' => [
-                'id' => $usuario->id,
-                'nombre' => $usuario->nombre,
-                'email' => $usuario->email,
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->nombre,
+                'email' => $user->email,
+                'imagen_perfil' => $user->imagen_perfil,
             ],
             'message' => 'Usuario creado exitosamente'
         ], 201);

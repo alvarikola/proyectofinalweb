@@ -1,39 +1,37 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
-
-const API_URL = import.meta.env.VITE_API_URL;
+import { useNavigate, Link, useLocation } from "react-router-dom";
+import { useRegister } from "@webbydevs/react-laravel-sanctum-auth";
 
 function RegisterSuccess() {
-    const navigate = useNavigate();
-  
-    useEffect(() => {
-      const timer = setTimeout(() => navigate("/login"), 3000);
-      return () => clearTimeout(timer); // Limpieza para evitar memory leaks (error de software donde un programa reserva memoria RAM pero no la libera tras usarla)
-    }, [navigate]);
-  
-    return (
-      <div className="bg-[#F5F5DC] min-h-screen flex items-center justify-center py-12">
-        <div className="bg-[#FAF9F6] px-6 py-8 sm:rounded-xl shadow-md border border-[#E5E5E5] text-center max-w-md mx-4">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#C97B63]/10 mb-4">
-            <svg className="h-6 w-6 text-[#C97B63]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-            </svg>
-          </div>
-          <h2 className="text-xl font-bold text-[#3A3A3A] mb-2">¡Cuenta creada!</h2>
-          <p className="text-[#A8A29E] mb-6">
-            Tu registro fue exitoso. Serás redirigido al inicio de sesión...
-          </p>
-          <button
-            onClick={() => navigate("/login")}
-            className="w-full rounded-md bg-[#C97B63] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[#b96d56] transition"
-          >
-            Ir a iniciar sesión ahora
-          </button>
-        </div>
-      </div>
-    );
-}
+  const navigate = useNavigate();
 
+  useEffect(() => {
+    const timer = setTimeout(() => navigate("/login"), 3000);
+    return () => clearTimeout(timer);
+  }, [navigate]);
+
+  return (
+    <div className="bg-[#F5F5DC] min-h-screen flex items-center justify-center py-12">
+      <div className="bg-[#FAF9F6] px-6 py-8 sm:rounded-xl shadow-md border border-[#E5E5E5] text-center max-w-md mx-4">
+        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#C97B63]/10 mb-4">
+          <svg className="h-6 w-6 text-[#C97B63]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+        <h2 className="text-xl font-bold text-[#3A3A3A] mb-2">¡Cuenta creada!</h2>
+        <p className="text-[#A8A29E] mb-6">
+          Tu registro fue exitoso. Serás redirigido al inicio de sesión...
+        </p>
+        <button
+          onClick={() => navigate("/login")}
+          className="w-full rounded-md bg-[#C97B63] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[#b96d56] transition"
+        >
+          Ir a iniciar sesión ahora
+        </button>
+      </div>
+    </div>
+  );
+}
 
 export default function Register() {
   const [nombre, setNombre] = useState("");
@@ -45,7 +43,12 @@ export default function Register() {
   const [error, setError] = useState("");
   const [cargando, setCargando] = useState(false);
   const [success, setSuccess] = useState(false);
+  
+  // Hook del nuevo paquete
+  const { register } = useRegister();
+  
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -58,36 +61,24 @@ export default function Register() {
 
     setCargando(true);
     try {
-      // Obtener cookie CSRF
-      await fetch(`${API_URL}/sanctum/csrf-cookie`, {
-        credentials: "include",
-        headers: { Accept: "application/json" },
+      // ✅ El paquete espera un objeto con los campos del formulario
+      const result = await register({
+        nombre,
+        email,
+        password,
+        password_confirmation: confirmPassword,
       });
 
-      // Enviar registro
-      const res = await fetch(`${API_URL}/api/register`, {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify({
-          nombre,
-          email,
-          password,
-          password_confirmation: confirmPassword,
-        }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Error al registrar usuario");
-
-      // Registro exitoso, redirigir a login
-      setSuccess(true);
-      setTimeout(() => navigate("/login"), 3000); // Redirige automáticamente en 3s
+      if (result.success) {
+        // Registro exitoso → mostrar pantalla de éxito
+        setSuccess(true);
+      } else {
+        // El paquete puede devolver un mensaje de error
+        setError(result.message || "Error al registrar usuario");
+      }
     } catch (err) {
-      setError(err.message);
+      // Errores de red o del paquete
+      setError(err.message || "Error de conexión con el servidor");
     } finally {
       setCargando(false);
     }
@@ -238,7 +229,7 @@ export default function Register() {
                 ¿Ya tienes cuenta?
               </span>{" "}
               <Link
-                to={`/login${location.search}`} // Conserva ?from=...
+                to={`/login${location.search}`}
                 className="font-semibold text-[#6B705C] hover:underline"
               >
                 Iniciar sesión
