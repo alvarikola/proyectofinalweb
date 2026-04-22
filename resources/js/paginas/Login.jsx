@@ -45,17 +45,36 @@ export default function Home() {
     <div className="bg-[#F5F5DC] min-h-screen">
       <div className="flex min-h-[80vh] flex-col justify-center py-12 sm:px-6 lg:px-8">
         
-        {/* TÍTULO */}
-        <div className="text-center sm:mx-auto sm:w-full sm:max-w-md">
-          <h1 className="text-3xl font-extrabold text-[#3A3A3A]">
-            Iniciar sesión
-          </h1>
-        </div>
+        
 
         {/* CARD */}
         <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
           <div className="bg-[#FAF9F6] px-6 pb-6 pt-8 sm:rounded-xl sm:shadow-md border border-[#E5E5E5]">
-
+            {/* TÍTULO */}
+            <div className="relative flex items-center justify-center mb-6 sm:mx-auto sm:w-full sm:max-w-md">
+              <button
+                type="button"
+                onClick={() => navigate("/")}
+                className="absolute left-0 p-1 text-[#3A3A3A] hover:text-[#C97B63] transition"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="22"
+                  height="22"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M19 12H5M12 5l-7 7 7 7" />
+                </svg>
+              </button>
+              <h1 className="text-3xl font-extrabold text-[#3A3A3A]">
+                Iniciar sesión
+              </h1>
+            </div>
             <form className="space-y-6" onSubmit={handleSubmit}>
               
               {/* EMAIL */}
