@@ -14,7 +14,7 @@ const sanctumConfig = {
   loginUrl: "api/login",
   registerUrl: "api/register",
   logoutUrl: "api/logout",
-  csrfCookieUrl: "sanctum/csrf-cookie",
+  csrfCookieUrl: "/sanctum/csrf-cookie",
 };
 
 export default function App() {

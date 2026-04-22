@@ -57,19 +57,14 @@ export default function MyNavBar({ onSearch }) {
     
     const handleLogout = async () => {
         try {
-            await logout(); // Hook del paquete
+            await logout();
+        } catch (error) {
+            // Si da 419 o 401 la sesión ya no es válida → redirigimos igualmente
+            console.warn("Error al cerrar sesión, limpiando localmente:", error);
+        } finally {
+            // Siempre redirigir al login independientemente del error
             setMenuAbierto(false);
             navigate("/login");
-        } catch (error) {
-            // ✅ Si es 401, significa que la sesión ya no existía → igual redirigimos
-            if (error?.response?.status === 401) {
-                console.warn("Sesión ya expirada, cerrando igualmente");
-                setMenuAbierto(false);
-                navigate("/login");
-                return;
-            }
-            // Otros errores sí los mostramos
-            console.error("Error al cerrar sesión:", error);
         }
     };
 

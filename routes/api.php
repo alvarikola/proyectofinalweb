@@ -17,7 +17,7 @@ Route::post('/register', [AuthController::class, 'register']); {/* Ruta para reg
 
 
 {/* Ruta protegida con autenticación */}
-Route::middleware('auth:sanctum')->group(function () { 
+Route::middleware('auth:web')->group(function () { 
 
     Route::post('/libros/{id}/resenas', [ResenaController::class, 'store']); {/* Ruta para crear una nueva reseña */}
 
