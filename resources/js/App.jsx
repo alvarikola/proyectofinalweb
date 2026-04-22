@@ -10,7 +10,7 @@ import Register from "./paginas/Register";
 
 // Configuración del paquete Sanctum
 const sanctumConfig = {
-  baseUrl: "https://8000-firebase-proyectofinal-1773404425378.cluster-64pjnskmlbaxowh5lzq6i7v4ra.cloudworkstations.dev",
+  baseUrl: window.location.origin,
   loginUrl: "api/login",
   registerUrl: "api/register",
   logoutUrl: "api/logout",
