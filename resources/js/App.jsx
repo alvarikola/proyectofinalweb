@@ -7,6 +7,7 @@ import Login from "./paginas/Login";
 import LibroDetalle from "./paginas/LibroDetalle";
 import CrearResena from "./paginas/CrearResena";
 import Register from "./paginas/Register";
+import Perfil from "./paginas/Perfil";
 
 // Configuración del paquete Sanctum
 const sanctumConfig = {
@@ -28,6 +29,7 @@ export default function App() {
           <Route path="/libro/:id" element={<LibroDetalle />} />
           <Route path="/libro/:id/resena/nueva" element={<CrearResena />} />
           <Route path="/libro/:id/resena/editar" element={<CrearResena />} />
+          <Route path="/perfil" element={<Perfil />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

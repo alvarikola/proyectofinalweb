@@ -93,4 +93,35 @@ class AuthController extends Controller
             'message' => 'Usuario creado exitosamente'
         ], 201);
     }
+
+    public function updateProfile(Request $request)
+    {
+        $usuario = $request->user();
+        
+        $validated = $request->validate([
+            'nombre' => 'sometimes|string|max:255',
+            'imagen_perfil' => 'sometimes|nullable|url', // URL de la imagen (Supabase)
+        ]);
+
+        if (isset($validated['nombre'])) {
+            $usuario->nombre = $validated['nombre'];
+        }
+        
+        if (isset($validated['imagen_perfil'])) {
+            $usuario->imagen_perfil = $validated['imagen_perfil'];
+        }
+        
+        $usuario->save();
+
+        return response()->json([
+            'user' => [
+                'id' => $usuario->id,
+                'name' => $usuario->nombre,
+                'email' => $usuario->email,
+                'imagen_perfil' => $usuario->imagen_perfil,
+                'rol' => $usuario->rol,
+            ],
+            'message' => 'Perfil actualizado'
+        ]);
+    }
 }
