@@ -24,4 +24,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']); {/* Ruta para cerrar sesión */}
 
     Route::get('/me', [AuthController::class, 'me']); {/* Ruta para obtener información del usuario actual */}
+
+    Route::get('/resenas/{id}', [ResenaController::class, 'show']);
+
+    Route::get('/mis-resenas/libro/{idLibro}', [ResenaController::class, 'miResena']);
+    Route::put('/resenas/{id}', [ResenaController::class, 'update']);
+    Route::delete('/resenas/{id}', [ResenaController::class, 'destroy']);
+
 });

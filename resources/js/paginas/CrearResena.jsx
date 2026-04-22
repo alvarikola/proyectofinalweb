@@ -15,16 +15,17 @@ const MODULOS = [
 export default function CrearResena() {
     const { id } = useParams();
     const location = useLocation();
-    const [searchParams] = useSearchParams();
-    const navigate = useNavigate();
+    const searchParams = new URLSearchParams(location.search); // ← Forma más compatible    const navigate = useNavigate();
     
     // Hooks del nuevo paquete
     const { user } = useAuth();
     const apiClient = useApiClient();
+    const navigate = useNavigate();
     
     // Detectar modo edición desde la URL: /libro/:id/resena/editar?resenaId=123
-    const esEdicion = location.pathname.includes('/editar');
     const resenaId = searchParams.get('resenaId');
+    const esEdicion = location.pathname.includes('/editar') && resenaId;
+    
     
     const [puntuacion, setPuntuacion] = useState(0);
     const [hovered, setHovered] = useState(0);
@@ -35,19 +36,26 @@ export default function CrearResena() {
     const [error, setError] = useState("");
     const [cargando, setCargando] = useState(esEdicion); // Si es edición, cargamos datos
 
-    // Cargar datos si es edición
     useEffect(() => {
+        // Solo cargar si es edición Y tenemos un ID válido
         if (!esEdicion || !resenaId) {
             setCargando(false);
             return;
         }
-
-        // ✅ useApiClient maneja automáticamente cookies y CSRF
-        apiClient.get(`/api/resenas/${resenaId}`)
-            .then(({ data }) => {
+    
+        // ✅ Usar fetch con credentials para evitar problemas con apiClient
+        fetch(`/api/resenas/${resenaId}`, {
+            credentials: "include",
+            headers: { Accept: "application/json" }
+        })
+            .then(r => {
+                if (r.status === 401) throw new Error("No autenticado");
+                if (r.status === 404) throw new Error("Reseña no encontrada");
+                if (!r.ok) throw new Error("Error al cargar");
+                return r.json();
+            })
+            .then(data => {
                 setPuntuacion(data.puntuacionEstrellas);
-                
-                // Parsear contenido JSON si está stringificado
                 try {
                     const parsed = JSON.parse(data.contenido);
                     setContenido(parsed);
@@ -58,10 +66,10 @@ export default function CrearResena() {
             })
             .catch(err => {
                 console.error("Error cargando reseña:", err);
-                setError("No se pudo cargar tu reseña");
+                setError(err.message);
             })
             .finally(() => setCargando(false));
-    }, [esEdicion, resenaId, apiClient]);
+    }, [esEdicion, resenaId]); // ← Sin apiClient
 
     const toggleModulo = (key) => {
         if (modulosActivos.includes(key)) {

@@ -34,20 +34,62 @@ export default function LibroDetalle() {
         cargarResenas();
     }, [id]);
 
-    // Cargar MI reseña si estoy logueado (ruta protegida)
+    // Cargar MI reseña si estoy logueado
     useEffect(() => {
+        let isMounted = true; // Para evitar actualizaciones si el componente se desmonta
+        
         if (!user) {
             setMiResena(null);
+            setCargandoMiResena(false);
             return;
         }
         
         setCargandoMiResena(true);
-        // ✅ useApiClient maneja automáticamente cookies y CSRF
-        apiClient.get(`/api/mis-resenas/libro/${id}`)
-            .then(({ data }) => setMiResena(data))
-            .catch(() => setMiResena(null))
-            .finally(() => setCargandoMiResena(false));
-    }, [user, id, apiClient]);
+        
+        // ✅ Usar fetch con credentials para enviar cookies
+        fetch(`/api/mis-resenas/libro/${id}`, {
+            credentials: "include",
+            headers: { 
+                Accept: "application/json",
+                "Content-Type": "application/json"
+            }
+        })
+            .then(async (r) => {
+                if (r.status === 401) {
+                    console.warn("⚠️ No autenticado - sesión expirada");
+                    return null;
+                }
+                if (r.status === 404) {
+                    console.log("Reseña no encontrada (usuario no tiene reseña)");
+                    return null;
+                }
+                if (!r.ok) {
+                    throw new Error(`Error ${r.status}: ${r.statusText}`);
+                }
+                return r.json();
+            })
+            .then((data) => {
+                if (isMounted) {
+                    console.log("📝 Mi reseña cargada:", data);
+                    setMiResena(data); // null si no tiene, objeto si tiene
+                }
+            })
+            .catch((err) => {
+                if (isMounted) {
+                    console.error("❌ Error cargando mi reseña:", err);
+                    setMiResena(null);
+                }
+            })
+            .finally(() => {
+                if (isMounted) {
+                    setCargandoMiResena(false);
+                }
+            });
+        
+        return () => {
+            isMounted = false; // Cleanup
+        };
+    }, [user, id]); // ← Solo dependencias esenciales
 
     const cargarResenas = () => {
         fetch(`/api/libros/${id}/resenas`, { headers: { Accept: 'application/json' } })
@@ -87,10 +129,6 @@ export default function LibroDetalle() {
             <p className="text-[#A8A29E]">Cargando...</p>
         </div>
     );
-
-    // Adaptar campos del usuario (tu backend usa 'nombre', el paquete espera 'name')
-    const nombre = user?.nombre || user?.name || "";
-    const email = user?.email || "";
 
     return (
         <div className="bg-[#F5F5DC] min-h-screen text-[#3A3A3A]">
@@ -154,8 +192,8 @@ export default function LibroDetalle() {
                             <button disabled className="bg-[#E5E5E5] text-[#A8A29E] px-5 py-2 rounded-xl text-sm font-semibold">
                                 Cargando...
                             </button>
-                        ) : miResena ? (
-                            // ✅ Tiene reseña → Botón "Editar" con ID
+                        ) : miResena && miResena.id ? (
+                            // ✅ TIENE RESEÑA → Botón "Editar"
                             <Link
                                 to={`/libro/${id}/resena/editar?resenaId=${miResena.id}`}
                                 className="bg-[#6B705C] text-white px-5 py-2 rounded-xl text-sm font-semibold hover:bg-[#5a5f4d] transition"
@@ -163,7 +201,7 @@ export default function LibroDetalle() {
                                 ✏️ Editar tu reseña
                             </Link>
                         ) : (
-                            // ✅ No tiene reseña → Botón "Escribir"
+                            // ✅ NO TIENE RESEÑA → Botón "Escribir"
                             <Link
                                 to={`/libro/${id}/resena/nueva`}
                                 className="bg-[#C97B63] text-white px-5 py-2 rounded-xl text-sm font-semibold hover:bg-[#b96d56] transition"
