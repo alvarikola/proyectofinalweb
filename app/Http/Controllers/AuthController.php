@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use App\Models\Usuario;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\BienvenidaMail;
 
 class AuthController extends Controller
 {
@@ -77,7 +79,10 @@ class AuthController extends Controller
             'rol' => 'user',
         ]);
 
-        // ✅ Devuelve 'user' con 'name' mapeado
+        // Enviar correo de bienvenida
+        Mail::to($user->email)->send(new BienvenidaMail($user));
+
+        // Devuelve 'user' con 'name' mapeado
         return response()->json([
             'user' => [
                 'id' => $user->id,

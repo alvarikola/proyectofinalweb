@@ -62,20 +62,15 @@ export default function Register() {
     setCargando(true);
     try {
       // ✅ El paquete espera un objeto con los campos del formulario
-      const result = await register({
+      await register({
         nombre,
         email,
         password,
         password_confirmation: confirmPassword,
       });
 
-      if (result.success) {
-        // Registro exitoso → mostrar pantalla de éxito
-        setSuccess(true);
-      } else {
-        // El paquete puede devolver un mensaje de error
-        setError(result.message || "Error al registrar usuario");
-      }
+      setSuccess(true);
+      
     } catch (err) {
       // Errores de red o del paquete
       setError(err.message || "Error de conexión con el servidor");
