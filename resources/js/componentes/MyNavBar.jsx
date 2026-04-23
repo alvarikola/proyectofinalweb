@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth, useLogout } from "@webbydevs/react-laravel-sanctum-auth"; // ← Nueva importación
 import logoSinFondo from "../logoSinFondo.png";
@@ -54,7 +54,27 @@ export default function MyNavBar({ onSearch }) {
     const [menuAbierto, setMenuAbierto] = useState(false);
     const navigate = useNavigate();
 
-    
+    const [avatarActual, setAvatarActual] = useState(user?.imagen_perfil);
+
+    useEffect(() => {
+        const handleProfileUpdate = () => {
+            // Cuando recibimos la señal, leemos los datos frescos del localStorage
+            try {
+                const storedUser = JSON.parse(localStorage.getItem('sanctum_user'));
+                if (storedUser) {
+                    setAvatarActual(storedUser.imagen_perfil);
+                }
+            } catch (e) {
+                console.error("Error leyendo perfil actualizado:", e);
+            }
+        };
+
+        window.addEventListener('perfil-actualizado', handleProfileUpdate);
+        
+        // Limpieza al desmontar
+        return () => window.removeEventListener('perfil-actualizado', handleProfileUpdate);
+    }, []);
+
     const handleLogout = async () => {
         try {
             await logout();
@@ -72,7 +92,7 @@ export default function MyNavBar({ onSearch }) {
     // Si tu Laravel devuelve { nombre, email, imagen_perfil }, úsalos directamente:
     const nombre = user?.nombre || user?.name || "";
     const email = user?.email || "";
-    const imagen_perfil = user?.imagen_perfil || user?.avatar || null;
+    const imagen_perfil = avatarActual;
     const iniciales = nombre?.charAt(0)?.toUpperCase() || "U";
 
     return (

@@ -1,10 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth, useApiClient } from "@webbydevs/react-laravel-sanctum-auth";
 import MyNavBar from "../componentes/MyNavBar";
 import { createClient } from "@supabase/supabase-js";
 
-// ✅ Inicializa Supabase (SOLO para storage, NO para auth)
 const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL,
   import.meta.env.VITE_SUPABASE_ANON_KEY
@@ -14,6 +13,9 @@ export default function Perfil() {
   const { user, loading: authLoading } = useAuth();
   const apiClient = useApiClient();
   const navigate = useNavigate();
+  
+  // Ref para evitar bucles con apiClient
+  const apiClientRef = useRef(apiClient);
 
   const [perfil, setPerfil] = useState(null);
   const [cargando, setCargando] = useState(true);
@@ -28,23 +30,27 @@ export default function Perfil() {
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
   const [exito, setExito] = useState(false);
+  
+  // Ref para saber si ya se cargó el perfil
+  const perfilCargadoRef = useRef(false);
 
-  // Cargar datos del perfil al montar
+  // Cargar datos del perfil (SOLO UNA VEZ)
   useEffect(() => {
-    if (authLoading) return;
-    
-    if (!user) {
-      navigate("/login?from=/perfil");
+    if (perfilCargadoRef.current || authLoading || !user) {
+      if (!authLoading && !user) {
+        navigate("/login?from=/perfil");
+      }
       return;
     }
 
     const cargarPerfil = async () => {
       try {
-        const { data } = await apiClient.get("/api/me");
+        const { data } = await apiClientRef.current.get("/api/me");
         setPerfil(data);
         setNombre(data.name || "");
         setImagenUrl(data.imagen_perfil || "");
         setPreview(data.imagen_perfil || null);
+        perfilCargadoRef.current = true;
       } catch (err) {
         console.error("Error cargando perfil:", err);
         setError("No se pudo cargar tu perfil");
@@ -54,62 +60,54 @@ export default function Perfil() {
     };
 
     cargarPerfil();
-  }, [user, authLoading, apiClient, navigate]);
+  }, [user, authLoading, navigate]);
 
-  // Preview de imagen cuando se selecciona archivo
+  // Preview de imagen (solo cuando cambia archivo)
   useEffect(() => {
-    if (!archivo) {
-      setPreview(imagenUrl || null);
-      return;
-    }
+    if (!archivo) return;
     
     const objectUrl = URL.createObjectURL(archivo);
     setPreview(objectUrl);
     
-    // Cleanup para evitar memory leaks
     return () => URL.revokeObjectURL(objectUrl);
-  }, [archivo, imagenUrl]);
+  }, [archivo]);
 
-  // Subir imagen a Supabase Storage
-  const subirImagen = async (file) => {
+  // Subir imagen a Supabase (URL construida manualmente para evitar errores del SDK)
+  const subirImagen = useCallback(async (file) => {
     if (!user?.id) throw new Error("Usuario no autenticado");
     
     const fileExt = file.name.split('.').pop().toLowerCase();
     const fileName = `perfiles/${user.id}-${Date.now()}.${fileExt}`;
     
-    // Validar tipo de archivo
     const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
     if (!validTypes.includes(file.type)) {
-      throw new Error("Solo se permiten imágenes JPG, PNG, WebP o GIF");
+      throw new Error("Solo JPG, PNG, WebP o GIF");
     }
     
-    // Validar tamaño (máx 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      throw new Error("La imagen no puede superar 5MB");
+      throw new Error("Máximo 5MB");
     }
 
-    const { data, error: uploadError } = await supabase.storage
+    // Subir archivo
+    const { error: uploadError } = await supabase.storage
       .from('avatars')
-      .upload(fileName, file, {
-        cacheControl: '3600',
-        upsert: false
-      });
+      .upload(fileName, file, { cacheControl: '3600', upsert: false });
     
     if (uploadError) {
       console.error("Error subiendo imagen:", uploadError);
       throw new Error(uploadError.message);
     }
 
-    // Obtener URL pública
-    const { data: urlData } = supabase.storage
-      .from('avatars')
-      .getPublicUrl(fileName);
+    // ✅ Construir URL pública manualmente (más fiable)
+    const baseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const publicUrl = `${baseUrl}/storage/v1/object/public/avatars/${fileName}`;
     
-    return urlData.publicUrl;
-  };
+    console.log("✅ Imagen subida:", publicUrl);
+    return publicUrl;
+  }, [user?.id]);
 
-  // Guardar cambios del perfil
-  const handleGuardar = async (e) => {
+  // Guardar cambios
+  const handleGuardar = useCallback(async (e) => {
     e.preventDefault();
     setError("");
     setExito(false);
@@ -118,45 +116,55 @@ export default function Perfil() {
     try {
       let nuevaImagenUrl = imagenUrl;
       
-      // Si hay archivo nuevo, subirlo primero
       if (archivo && archivo instanceof File) {
         nuevaImagenUrl = await subirImagen(archivo);
       }
 
-      // Actualizar en backend
-      const { data } = await apiClient.put("/api/me", {
+      const { data } = await apiClientRef.current.put("/api/me", {
         nombre: nombre.trim(),
         imagen_perfil: nuevaImagenUrl || null,
       });
 
-      // Actualizar estado local
-      setPerfil(data);
-      setNombre(data.name);
-      setImagenUrl(data.imagen_perfil || "");
-      setArchivo(null);
+      // ✅ CORRECCIÓN: Tu backend devuelve { user: {...}, message: '...' }
+      const userData = data.user || data; 
+      
+      setPerfil(userData);
+      setNombre(userData.name);
+      setImagenUrl(userData.imagen_perfil || "");
+      setPreview(userData.imagen_perfil || null); // ✅ Ahora sí tendrá la URL correcta
       setEditando(false);
       setExito(true);
+      
+      // Actualizar localStorage para el NavBar
+      try {
+        const stored = localStorage.getItem('sanctum_user');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          localStorage.setItem('sanctum_user', JSON.stringify({ ...parsed, ...userData }));
+        }
+      } catch (e) {
+        console.warn("No se pudo actualizar auth context:", e);
+      }
       
       setTimeout(() => setExito(false), 3000);
       
     } catch (err) {
       console.error("Error guardando perfil:", err);
-      const errorMsg = err.response?.data?.message || err.message || "Error al guardar los cambios";
-      setError(errorMsg);
+      setError(err.response?.data?.message || err.message || "Error al guardar");
     } finally {
       setGuardando(false);
     }
-  };
+  }, [nombre, imagenUrl, archivo, subirImagen]);
 
   // Cancelar edición
-  const handleCancelar = () => {
+  const handleCancelar = useCallback(() => {
     setNombre(perfil?.name || "");
     setImagenUrl(perfil?.imagen_perfil || "");
     setPreview(perfil?.imagen_perfil || null);
     setArchivo(null);
     setEditando(false);
     setError("");
-  };
+  }, [perfil]);
 
   // Loading
   if (authLoading || cargando) {
@@ -192,10 +200,11 @@ export default function Perfil() {
                 <div className="w-24 h-24 rounded-full bg-[#E5E5E5] border-4 border-[#FAF9F6] shadow-lg overflow-hidden flex items-center justify-center">
                   {preview ? (
                     <img 
+                      key={preview} // ✅ Fuerza a React a recargar la imagen cuando cambia la URL
                       src={preview} 
                       alt="Avatar" 
                       className="w-full h-full object-cover"
-                      onError={() => setPreview(null)} // Si falla la imagen, mostrar iniciales
+                      // ✅ ELIMINADO onError: ya no resetea a "U" si hay un micro-retraso de CDN
                     />
                   ) : (
                     <span className="text-3xl font-bold text-[#6B705C]">
@@ -214,7 +223,10 @@ export default function Perfil() {
                       type="file" 
                       accept="image/*" 
                       className="hidden"
-                      onChange={(e) => setArchivo(e.target.files[0])}
+                      onChange={(e) => {
+                        setArchivo(e.target.files[0]);
+                        setError("");
+                      }}
                     />
                   </label>
                 )}
@@ -224,7 +236,7 @@ export default function Perfil() {
             {/* Mensajes */}
             {exito && (
               <div className="mb-4 p-3 bg-[#C97B63]/10 border border-[#C97B63]/30 rounded-xl text-center">
-                <p className="text-sm text-[#C97B63] font-medium">✅ Perfil actualizado correctamente</p>
+                <p className="text-sm text-[#C97B63] font-medium">✅ Perfil actualizado</p>
               </div>
             )}
             {error && (
@@ -250,18 +262,9 @@ export default function Perfil() {
                 <div className="pt-4 border-t border-[#E5E5E5]">
                   <h3 className="text-sm font-semibold text-[#6B705C] mb-3">Estadísticas</h3>
                   <div className="grid grid-cols-3 gap-4 text-center">
-                    <div>
-                      <p className="text-2xl font-bold text-[#C97B63]">0</p>
-                      <p className="text-xs text-[#A8A29E]">Reseñas</p>
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold text-[#C97B63]">0</p>
-                      <p className="text-xs text-[#A8A29E]">Leídos</p>
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold text-[#C97B63]">0</p>
-                      <p className="text-xs text-[#A8A29E]">Por leer</p>
-                    </div>
+                    <div><p className="text-2xl font-bold text-[#C97B63]">0</p><p className="text-xs text-[#A8A29E]">Reseñas</p></div>
+                    <div><p className="text-2xl font-bold text-[#C97B63]">0</p><p className="text-xs text-[#A8A29E]">Leídos</p></div>
+                    <div><p className="text-2xl font-bold text-[#C97B63]">0</p><p className="text-xs text-[#A8A29E]">Por leer</p></div>
                   </div>
                 </div>
 
@@ -330,13 +333,16 @@ export default function Perfil() {
                   {archivo && (
                     <button
                       type="button"
-                      onClick={() => setArchivo(null)}
+                      onClick={() => {
+                        setArchivo(null);
+                        setPreview(imagenUrl || null);
+                      }}
                       className="text-xs text-[#C97B63] hover:underline mt-2"
                     >
                       Cancelar selección
                     </button>
                   )}
-                  <p className="text-xs text-[#A8A29E] mt-2">Máximo 5MB. JPG, PNG, WebP o GIF</p>
+                  <p className="text-xs text-[#A8A29E] mt-2">Máx 5MB. JPG, PNG, WebP o GIF</p>
                 </div>
 
                 <div className="flex gap-3 pt-4">
