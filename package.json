@@ -15,6 +15,7 @@
         "vite": "^7.0.7"
     },
     "dependencies": {
+        "@supabase/supabase-js": "^2.104.0",
         "@vitejs/plugin-react": "^4.7.0",
         "@webbydevs/react-laravel-sanctum-auth": "^1.0.33",
         "react": "^19.2.4",
