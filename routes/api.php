@@ -6,9 +6,11 @@ use App\Http\Controllers\ResenaController;
 use App\Http\Controllers\AuthController;
 
 // Rutas públicas
+Route::get('/libros/top-valorados', [LibroController::class, 'topValorados']); {/* Ruta para obtener los 5 libros mejor valorados */}
 Route::get('/libros', [LibroController::class, 'index']); {/* Ruta para obtener todos los libros */}
 Route::get('/libros/{id}', [LibroController::class, 'show']); {/* Ruta para obtener un libro específico */}
 Route::get('/libros/{id}/resenas', [ResenaController::class, 'index']); {/* Ruta para obtener todas las reseñas de un libro */}
+
 
 // Rutas de autentificación
 Route::get('/login', [AuthController::class, 'login']); {/* Ruta para obtener la página de login */}
